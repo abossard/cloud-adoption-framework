@@ -82,4 +82,4 @@ Workload teams should also decide to duplicate some of the logs that are availab
 
 ## Next step
 
-[Monitor your Azure platform landing zone components](management-monitor.md)
+[Monitor Azure platform landing zone health](management-monitor.md)

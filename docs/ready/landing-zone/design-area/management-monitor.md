@@ -1,104 +1,97 @@
 ---
-title: Monitor Azure platform landing zone components
-description: Learn how to deploy baseline monitoring for your Azure platform services to ensure availability, reliability, security, and scalability.
+title: Monitor Azure platform landing zone health
+description: Use health models to represent Azure landing zone capabilities and operational concerns, supported by telemetry and resource monitoring.
 author: jtracey93
 ms.author: jatracey
-ms.date: 12/19/2025
+ms.date: 10/14/2026
 ms.update-cycle: 180-days
 ms.topic: concept-article
 ms.custom: internal, UpdateFrequency.5
+ai-usage: ai-assisted
 ---
 
-# Monitor Azure platform landing zone components
+# Monitor Azure platform landing zone health
 
-Monitor your Azure platform landing zone components to ensure availability, reliability, security, and scalability. Monitoring your components enables your organization to:
+Monitor the capabilities your Azure landing zone supports. The platform team needs to know which services work and which specific situations fail.
 
-- Promptly detect and resolve issues, optimize resource utilization, and proactively address security threats.
-- Continuously monitor performance and health, which helps your organization minimize downtime, optimize costs, and ensure efficient operation.
-- Facilitate capacity planning, which allows your organization to anticipate resource needs and scale the platform accordingly.
-
-Monitor the platform landing zone services to maintain a stable and secure environment, maximize performance, and effectively meet the evolving needs of your business.
-
-The following video discusses the solution that's described in this article and demonstrates how to deploy Azure Monitor.
-
-> [!VIDEO https://www.youtube.com/embed/xeuxetAfHRg?si=1dmmOyIAkdf8nMgV]
+Health modeling connects operational concerns to evidence and dependencies. Define healthy behavior for the platform, then relate observed conditions to the concerns they affect.
 
 ## Azure landing zone monitoring guidance
 
-Baseline metric, activity log, and log query alerts are available for landing zone platform components and other selected landing zone components. These alerts ensure consistent alerting and monitoring for your Azure landing zone. They're based on Microsoft-recommended practices for proactive monitoring, such as setting up alerts, thresholds, and notifications for timely problem detection and response. Use the following guidance to achieve real-time visibility into the performance, utilization, and security of your platform landing zone implementation. Proactively address issues, optimize resource allocation, and ensure a reliable and secure environment.
+Start with health models that represent the value and capabilities of your landing zone. A model can assess a shared capability, a particular situation, or a group of services with a common owner.
 
-:::image type="complex" source="media/azure-monitor-baseline-alerts-policy-initiative-flow.svg" alt-text="Diagram that shows Azure Monitor baseline alert topology." lightbox="media/azure-monitor-baseline-alerts-policy-initiative-flow.svg":::
-   Diagram that shows the initiatives are applied at the platform management groups, connectivity, identity and management while the landing zone initiative is applied to the landing zones management group. The service health initiative and notifications assets initiative is applied at the intermediate root management group so that it is applied to all subscriptions.
-:::image-end:::
-*Download a [Visio file](https://azure.github.io/azure-monitor-baseline-alerts/patterns/alz/media/AMBA-Diagrams.vsdx) of this architecture.*
+The value comes from how you build the model. Your choices of entities, signal criteria, and relationships determine whether its health states describe your concerns. A collection of resources or imported alert rules is a starting input, not that interpretation.
 
-The following subsets of Azure components have one or more alerts defined:
+Use [Azure Monitor health models](/azure/azure-monitor/health-models/overview) to model entities, their signals, and dependency rollup. Signals interpret existing observations or accept externally evaluated health. Relationships describe which concerns depend on others. Alerts notify operators about selected health changes.
 
-- Azure ExpressRoute
-- Azure Firewall
-- Azure Virtual Network
-- Azure Virtual WAN
-- Azure Monitor Log Analytics workspace
-- Azure Private DNS zone
-- Azure Key Vault
-- Azure Virtual Machine
-- Azure Storage account
+> [!IMPORTANT]
+> Azure Monitor health models are in preview. Review [availability and required access](/azure/azure-monitor/health-models/create) and validate the model before relying on it operationally. Keep the telemetry and alert coverage your organization requires.
 
-For more information, see [Alert details](/azure/azure-monitor/alerts/alerts-overview).
+### Start with the concerns your platform serves
 
-To ensure that your organization's resources are properly monitored and secured, you also need to properly configure alerts and implement appropriate processes to respond to alerts. Configure action groups with the appropriate notification channels and test the alerts to ensure that they work as expected. In accordance with the Cloud Adoption Framework principle of subscription democratization, configure at least one action group for each subscription so that relevant staff is notified of alerts. As a minimum form of notification, the action group should include an email notification channel. If you use Azure Monitor alert processing rules to route alerts to one or more action groups, note that service health alerts don't support alert processing rules. Configure service health alerts directly with the action group.
+Choose questions that platform and workload owners need monitoring to answer. The following examples span ALZ domains. They are modeling choices, not predefined domain templates.
 
-In accordance with [Azure landing zone principles for policy-driven governance](/azure/cloud-adoption-framework/ready/enterprise-scale/dine-guidance#why-use-dine-and-modify-policies), a framework solution is available that provides an easy way to scale alerting by using Azure Policy. These policies use the *DeployIfNotExists* effect to deploy relevant alert rules, alert processing rules, and action groups when you create a resource in your Azure landing zone environment, in both platform services and landing zones.
+| ALZ domain | Example concern |
+|---|---|
+| Connectivity | Does shared routing work, and can a particular datacenter connection reach its required destination? |
+| Identity | Can operators and workloads authenticate to the services they require? |
+| Management | Does operational telemetry arrive with enough freshness to support platform decisions? |
+| Security | Do the controls protecting an approved path behave as intended? |
+| Landing-zone workloads | Can a critical workload journey use its shared platform dependencies? |
 
-Azure Policy provides a default baseline configuration, but you can configure the policies to suit your needs. If you require alerting on different metrics than what the repository provides, the solution provides a framework for you to develop your own policies for deploying alert rules. For more information, see the [Azure Monitor baseline alerts (AMBA) contributor guide](https://aka.ms/amba/contributing) and [Introduction to an Azure Monitor deployment](https://azure.github.io/azure-monitor-baseline-alerts/patterns/alz/HowTo/deploy/Introduction-to-deploying-the-ALZ-Pattern/). The solution is integrated into the Azure landing zone installation experience, so new implementations of Azure landing zone offer you the opportunity to set up baseline alerting at installation time.
+A tenant-level view can combine domain and workload models. Keep detailed concerns with their owners and aggregate the health that matters to the wider platform.
 
-Deploy alerts via policies to provide flexibility and scalability, and to ensure that alerts are deployed inside and outside the Azure landing zone scope. Alerts are only deployed when the corresponding resources are created, which avoids unnecessary cost and ensures updated alerts configurations at deployment time. This function coincides with the Azure landing zone principle of policy-driven governance.
+:::image type="content" source="media/alz-connectivity-health-model/alz-connectivity-tenant-scale.svg" alt-text="An illustrative tenant health model combines shared platform domains, including connectivity, with corporate and online workload models." lightbox="media/alz-connectivity-health-model/alz-connectivity-tenant-scale.svg" border="false":::
+
+### Build the model around meaning
+
+Choose the concern before you select resources or thresholds.
+
+1. Define the concern and its owner. Choose whether the model describes a domain, shared capability, or specific situation.
+2. Choose evidence and criteria. Agree what Healthy, Degraded, Unhealthy, and Unknown mean for that concern. Discovery finds resources. Existing alerts can supply starting criteria.
+3. Define dependencies and impact. A failed resource or narrow situation should affect parent health according to the service's actual tolerances.
+4. Choose the response. Identify who investigates a concern and which health changes should notify that team.
+
+For the concepts and worked examples, see [Health modeling for Azure landing zones](management-connectivity-health-model.md). Connectivity is one example domain, not the limit of the approach.
+
+### Support the model with telemetry and resource alerts
+
+Health models interpret evidence. Resource monitoring supplies the observations and operational coverage on which that interpretation depends.
+
+Use Azure Monitor baseline alerts (AMBA) for metric, activity log, and log query alert coverage on supported platform resources. Tune alert criteria for your estate. See [Azure Monitor alerts](/azure/azure-monitor/alerts/alerts-overview) and [Introduction to an Azure Monitor deployment](https://azure.github.io/azure-monitor-baseline-alerts/patterns/alz/HowTo/deploy/Introduction-to-deploying-the-ALZ-Pattern/).
+
+Azure Policy can deploy alert rules and supporting notification resources at scale with the *DeployIfNotExists* effect. Follow [policy-driven governance guidance](/azure/cloud-adoption-framework/ready/enterprise-scale/dine-guidance#why-use-dine-and-modify-policies) and the [AMBA contributor guide](https://aka.ms/amba/contributing) for policy and alert extensions.
+
+Configure at least one action group per subscription with an email notification channel. Test routing to the responsible staff. Service health alerts don't support alert processing rules, so configure their action groups directly.
+
+Supporting resources include the [AMBA policy topology](media/azure-monitor-baseline-alerts-policy-initiative-flow.svg), its [Visio source](https://azure.github.io/azure-monitor-baseline-alerts/patterns/alz/media/AMBA-Diagrams.vsdx), and the [resource-monitoring walkthrough video](https://www.youtube.com/embed/xeuxetAfHRg?si=1dmmOyIAkdf8nMgV).
 
 ## Brownfield guidance
 
-In a brownfield scenario, your organization has an existing Azure landing zone implementation, or your organization implemented Azure before an Azure landing zone architecture was available.
+Begin with existing capabilities, resources, and monitoring. Health modeling doesn't require the estate to have a new infrastructure-as-code deployment.
 
-This section describes the high-level steps for Azure landing zone baseline monitoring if you have an existing Azure footprint, whether aligned to Azure landing zones or not.
+1. Choose one concern and define its scope with the responsible team.
+2. Discover relevant resources and add the capability or situation entities that resource inventory alone can't describe.
+3. Reuse suitable observations and alert criteria. Compare the model's states with known incidents before changing existing notification arrangements.
 
-### Aligned to an Azure landing zone
-
-Use this process if you have an existing Azure landing zone implementation and you want to use the policy-driven approach.
-
-1. Import relevant policies and initiatives from the AMBA repository.
-2. Assign the required policies in your environment.
-3. Remediate noncompliant policies.
-
-For more information about policies relevant to your environment and the steps to apply them, see [Determine your management group hierarchy](https://aka.ms/amba/alz/brownfield).
-
-### Not aligned to an Azure landing zone
-
-Use this process if you have a non-Azure landing zone aligned implementation and you want to use the policy-driven approach.
-
-1. Import relevant policies and initiatives from the AMBA repository to the top-most management group from which you wish to assign the policies.
-2. Assign the required policies in your environment.
-3. Remediate noncompliant policies.
-
-For more information about policies relevant to your environment and the steps to apply them, see [Determine your management group hierarchy](https://aka.ms/amba/alz/brownfield).
+Maintain resource-alert coverage alongside this work. Import relevant AMBA policies and initiatives, assign them at the intended scope, and remediate noncompliant resources. In an ALZ-aligned estate, use the corresponding hierarchy. In another estate, choose the topmost management group from which the policies should apply. See [Determine your management group hierarchy](https://aka.ms/amba/alz/brownfield).
 
 ## Test the framework
 
-Test policies and alerting before a deployment to production so you can:
+Validate the model's interpretation and the supporting monitoring before production use.
 
-- Ensure that your organization's resources are properly monitored and secured.
-- Identify issues early to ensure proper functionality, reduce risk, and improve performance.
-- Detect and fix problems before they become larger. Avoid false positives or negatives and reduce the risk of costly mistakes.
-- Optimize configurations for better performance and avoid performance-related issues in production.
+1. Compare known successful and failed situations with their signal and entity states.
+2. Check how a scoped failure affects shared capabilities and the domain root. Include a missing-data case.
+3. Test alert deployment, notification routing, and the team's response process.
 
-Testing helps you ensure that your alerting and policy configurations meet your organization's requirements and comply with regulations and standards. With regulations in place, you can avoid security breaches, compliance violations, and other risks that can have consequences for your organization.
+See [Testing approach for Azure landing zones](/azure/cloud-adoption-framework/ready/enterprise-scale/testing-approach).
 
-Testing is an essential step in the development and deployment of alerting and policy configurations, and can help you ensure the security, reliability, and performance of your organization's resources.
-
-For more information, see [Testing approach for Azure landing zones](/azure/cloud-adoption-framework/ready/enterprise-scale/testing-approach).
-
->[!NOTE]
->If you implement alerting by using a different approach, like infrastructure as code (IaC), for example Azure Resource Manager, Bicep, or Terraform, or via the portal, the guidance for alerts, severity, and thresholds that's in the repository still applies for determining which alert rules to configure and for notifications.
+> [!NOTE]
+> AMBA's alert, severity, and threshold guidance also applies outside Azure Policy. You can deploy resource alerts through Azure Resource Manager, Bicep, Terraform, or the portal.
 
 ## Next steps
+
+- [Health modeling for Azure landing zones](management-connectivity-health-model.md)
 
 - [Introduction to deploying Azure Monitor](https://azure.github.io/azure-monitor-baseline-alerts/patterns/alz/HowTo/deploy/Introduction-to-deploying-the-ALZ-Pattern/)
 
